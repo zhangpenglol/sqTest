@@ -17,16 +17,32 @@ export default {
     },
     height: {
       type: String,
-      default: "500px",
+      default: "100%",
+    },
+    chartData: {
+      type: Object,
+      default: {},
+    },
+    current: {
+      type: Number,
+      default: 0,
+    },
+  },
+  watch: {
+    current: {
+      handler: function (newValue, oldValue) {
+        this.handlerCurrent(newValue);
+      },
+      deep: true,
+      immediate: true,
     },
   },
   data() {
     return {
       chart: null,
-      text: "各园区用地规模对比（单位：公顷）", //标题内容
-      tabulate: [], //各园区用地规模数据
-      xlist: [], //园区名称
-      sjydmj: [], //用地面积
+      tabulate: [],
+      regionName: [],
+      surplusPloughArea: [],
     };
   },
   mounted() {
@@ -43,121 +59,97 @@ export default {
     this.chart = null;
   },
   methods: {
+    handlerCurrent(index) {
+      this.regionName = [];
+      this.surplusPloughArea = [];
+      if (index == 0) {
+        this.chartData.qykyxzgdpm.forEach((item) => {
+          this.regionName.push(item.regionName);
+          this.surplusPloughArea.push(item.surplusPloughArea);
+        });
+      } else if (index == 1) {
+        this.chartData.qykyxznydpm.forEach((item) => {
+          this.regionName.push(item.regionName);
+          this.surplusPloughArea.push(item.surplusFarmingArea);
+        });
+      }
+      this.initChart();
+    },
     async initChart() {
       // 基于准备好的dom，初始化echarts实例
       this.chart = echarts.init(this.$el, "macarons");
       //使用刚指定的配置项和数据显示图表。
       let options = {
+        title: {
+          textStyle: {
+            fontSize: 16,
+            color: "#333333",
+          },
+        },
         tooltip: {
           trigger: "axis",
           axisPointer: {
-            type: "shadow",
+            type: "cross",
+            crossStyle: {
+              color: "#999",
+            },
           },
         },
-        legend: {},
+        // legend: {
+        //   icon: "rect",
+        //   data: ["建新地块总面积", "使用拆旧面积"],
+        //   itemWidth: 4, // 设置宽度
+        //   itemHeight: 4, // 设置高度
+        //   itemGap: 8, // 设置间距
+        //   textStyle: {
+        //     //图例文字的样式
+        //     color: "#333333",
+        //     fontSize: 14,
+        //   },
+        // },
         grid: {
           left: "3%",
           right: "4%",
-          bottom: "3%",
+          bottom: "10%",
           containLabel: true,
         },
         xAxis: [
           {
             type: "category",
-            data: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            data: this.regionName,
+            axisPointer: {
+              type: "shadow",
+            },
           },
         ],
         yAxis: [
           {
             type: "value",
+            min: 600,
+            interval: 50,
           },
         ],
         series: [
           {
-            name: "Direct",
+            name: "建新地块总面积",
             type: "bar",
-            emphasis: {
-              focus: "series",
-            },
-            data: [320, 332, 301, 334, 390, 330, 320],
-          },
-          {
-            name: "Email",
-            type: "bar",
-            stack: "Ad",
-            emphasis: {
-              focus: "series",
-            },
-            data: [120, 132, 101, 134, 90, 230, 210],
-          },
-          {
-            name: "Union Ads",
-            type: "bar",
-            stack: "Ad",
-            emphasis: {
-              focus: "series",
-            },
-            data: [220, 182, 191, 234, 290, 330, 310],
-          },
-          {
-            name: "Video Ads",
-            type: "bar",
-            stack: "Ad",
-            emphasis: {
-              focus: "series",
-            },
-            data: [150, 232, 201, 154, 190, 330, 410],
-          },
-          {
-            name: "Search Engine",
-            type: "bar",
-            data: [862, 1018, 964, 1026, 1679, 1600, 1570],
-            emphasis: {
-              focus: "series",
-            },
-            markLine: {
-              lineStyle: {
-                type: "dashed",
+            barWidth: "32px",
+            data: this.surplusPloughArea,
+            itemStyle: {
+              normal: {
+                //颜色渐变
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  {
+                    offset: 0,
+                    color: "#FC6D94",
+                  },
+                  {
+                    offset: 1,
+                    color: "#3757E2",
+                  },
+                ]),
               },
-              data: [[{ type: "min" }, { type: "max" }]],
             },
-          },
-          {
-            name: "Baidu",
-            type: "bar",
-            barWidth: 5,
-            stack: "Search Engine",
-            emphasis: {
-              focus: "series",
-            },
-            data: [620, 732, 701, 734, 1090, 1130, 1120],
-          },
-          {
-            name: "Google",
-            type: "bar",
-            stack: "Search Engine",
-            emphasis: {
-              focus: "series",
-            },
-            data: [120, 132, 101, 134, 290, 230, 220],
-          },
-          {
-            name: "Bing",
-            type: "bar",
-            stack: "Search Engine",
-            emphasis: {
-              focus: "series",
-            },
-            data: [60, 72, 71, 74, 190, 130, 110],
-          },
-          {
-            name: "Others",
-            type: "bar",
-            stack: "Search Engine",
-            emphasis: {
-              focus: "series",
-            },
-            data: [62, 82, 91, 84, 109, 110, 120],
           },
         ],
       };

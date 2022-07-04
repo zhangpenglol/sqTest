@@ -17,16 +17,20 @@ export default {
     },
     height: {
       type: String,
-      default: "536px",
+      default: "100%",
     },
+    chartData:{
+      type:Object,
+      default:{},
+    }
   },
   data() {
     return {
       chart: null,
-      text: "各园区用地规模对比（单位：公顷）", //标题内容
       tabulate: [], //各园区用地规模数据
-      xlist: [], //园区名称
-      sjydmj: [], //用地面积
+      regionName:[],
+      jxdkzmj :[],
+      sycjmj :[],
     };
   },
   mounted() {
@@ -34,7 +38,9 @@ export default {
       this.initChart();
     });
   },
-  created() {},
+  created() {
+    this.handle();
+  },
   beforeDestroy() {
     if (!this.chart) {
       return;
@@ -43,6 +49,15 @@ export default {
     this.chart = null;
   },
   methods: {
+    handle(){
+      this.chartData.jxdkzmj.forEach(item => {
+        this.regionName.push(item.regionName)
+        this.jxdkzmj.push(item.totalArea)
+      });
+      this.chartData.sycjmj.forEach(item => {
+        this.sycjmj.push(item.totalArea)
+      });
+    },
     async initChart() {
       // 基于准备好的dom，初始化echarts实例
       this.chart = echarts.init(this.$el, "macarons");
@@ -67,9 +82,10 @@ export default {
         legend: {
           icon: "rect",
           data: ["建新地块总面积", "使用拆旧面积"],
-          itemWidth: 4, // 设置宽度
-          itemHeight: 4, // 设置高度
-          itemGap: 8, // 设置间距
+          itemWidth: 32,
+          left: "right",
+          itemHeight: 4,
+          itemGap: 10,
           textStyle: {
             //图例文字的样式
             color: "#333333",
@@ -79,13 +95,13 @@ export default {
         grid: {
           left: "3%",
           right: "4%",
-          bottom: "10%",
+          bottom: "5%",
           containLabel: true,
         },
         xAxis: [
           {
             type: "category",
-            data: ["宿豫", "宿城", "湖滨", "洋河", "沐阳", "泗阳"],
+            data: this.regionName,
             axisPointer: {
               type: "shadow",
             },
@@ -94,9 +110,6 @@ export default {
         yAxis: [
           {
             type: "value",
-            min: 0,
-            max: 250,
-            interval: 50,
           },
         ],
         series: [
@@ -104,18 +117,18 @@ export default {
             name: "建新地块总面积",
             type: "bar",
             barWidth: "32px",
-            data: [176, 25, 23, 45, 70, 23],
+            data: this.jxdkzmj,
             itemStyle: {
               normal: {
                 //颜色渐变
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                   {
                     offset: 0,
-                    color: "#2C9FF6",
+                    color: "#5977F6",
                   },
                   {
                     offset: 1,
-                    color: "#60D1FF",
+                    color: "#5977F6",
                   },
                 ]),
               },
@@ -123,7 +136,8 @@ export default {
           },
           {
             name: "使用拆旧面积",
-            data: [75, 26, 59, 67, 61, 28],
+            
+            data: this.sycjmj,
             type: "bar",
             barWidth: "32px",
             itemStyle: {
@@ -132,11 +146,11 @@ export default {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                   {
                     offset: 0,
-                    color: "#2C9FF6",
+                    color: "#BB66E1",
                   },
                   {
                     offset: 1,
-                    color: "#60D1FF",
+                    color: "#BB66E1",
                   },
                 ]),
               },

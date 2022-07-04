@@ -1,4 +1,4 @@
-import { login } from "@/api/user";
+import { login ,getAuthMenu} from "@/api/user";
 import { getToken, setToken, removeToken } from "@/utils/auth";
 import Layout from "@/components/layout/index.vue";
 // import { component } from "vue/types/umd";
@@ -15,21 +15,21 @@ function generaMenu(routes, data) {
         item.path === "/visualMap"
           ? (resolve) => require([`@/views${item.path}/index.vue`], resolve)
           : filterComponent(item),
-      children: [],
+          children: [],
       redirect: item.redirect ? item.redirect : null,
-      name: item.meta.title,
+      name: item.menuName,
       id: item.id,
       meta: {
-        title: item.meta.title,
-        icon: item.meta.icon ? item.meta.icon : "",
+        title: item.meta ? item.meta.title :"",
+        icon: item.meta ? item.meta.icon : "",
       },
     };
-    if (item.children && item.children.length !== 0) {
-      generaMenu(menu.children, item.children);
+    if (item.child && item.child.length !== 0) {
+      generaMenu(menu.children, item.child);
     }
     if (
-      item.children &&
-      item.children.length === 0 &&
+      item.child &&
+      item.child.length === 0 &&
       item.component === "Layout"
     ) {
       let arr = [
@@ -38,11 +38,11 @@ function generaMenu(routes, data) {
           component: (resolve) =>
             require([`@/views${item.path}/index.vue`], resolve),
           redirect: item.redirect ? item.redirect : null,
-          name: item.meta.title,
+          name: item.name,
           id: item.id,
           meta: {
-            title: item.meta.title,
-            icon: item.meta.icon ? item.meta.icon : "",
+            title: item.meta ? item.meta.title :"",
+            icon: item.meta ? item.meta.icon : "",
           },
         },
       ];
@@ -76,26 +76,18 @@ export const loginInfo = ({ commit }, payload) => {
       });
   });
 };
-
-export const getRoutes = ({ commit }, payload) => {
+export const getRoutes = ({ commit }, userInfo) => {
   return new Promise((resolve, reject) => {
-    commit("SET_MENULIST", menulist);
-    let routes = generaMenu([], menulist);
-    console.log(routes);
-    routes.length > 0 ? commit("SET_ROUTES", routes) : [];
-
-    resolve(routes);
-    return;
-
-    // getAuthMenu(userInfo.userId).then(res => {
-    //     const menulist = res.data;
-    //     let routes = generaMenu(asyncRoutes, newMenulist)
-    //     routes.length > 0 ? commit('SET_ROUTES', routes) : [];
-    //     resolve(routes)
-    //     return;
-    // }).catch(error => {
-    //     reject(error)
-    // })
+    getAuthMenu(userInfo.userId).then(res => {
+        const menulist = res.data;
+        let routes = generaMenu([], menulist)
+        commit("SET_MENULIST", menulist);
+        routes.length > 0 ? commit('SET_ROUTES', routes) : [];
+        resolve(routes)
+        return;
+    }).catch(error => {
+        reject(error)
+    })
   });
 };
 
@@ -122,238 +114,3 @@ export const resetToken = ({ commit }) => {
     resolve();
   });
 };
-
-let menulist = [
-  {
-    path: "/home",
-    component: "Layout",
-    name: "index",
-    meta: {
-      title: "首页",
-      icon: "icon-shouyefill",
-    },
-    children: [],
-  },
-  {
-    path: "/visualMap",
-    component: "visualMap",
-    name: "visualMap",
-    meta: {
-      title: "可视化系统",
-      icon: "icon-ditu1",
-    },
-    children: [],
-  },
-  {
-    path: "/subjectPlan",
-    component: "Layout",
-    meta: {
-      title: "专项规划管理",
-      icon: "icon-yanfaguanli-lixiangguanli",
-    },
-    children: [
-      {
-        path: "/subjectPlan",
-        name: "subjectPlan",
-        component: "/subjectPlan/index",
-        meta: {
-          title: "专项规划管理",
-          icon: "usermanager",
-        },
-      },
-      {
-        path: "/addsubject",
-        name: "addsubject",
-        component: "/subjectPlan/addSubject/index",
-        meta: {
-          title: "新增/修改专项规划",
-          icon: "usermanager",
-        },
-      },
-    ],
-  },
-  {
-    path: "/targetmanage",
-    component: "Layout",
-    meta: {
-      title: "指标使用管理",
-      icon: "icon-zichantudiquanshengmingzhouqihetongjianguan_1",
-    },
-    children: [
-      {
-        path: "/targetexchange",
-        name: "targetexchange",
-        component: "/targetmanage/targetexchange/index",
-        meta: {
-          title: "指标流转",
-          icon: "usermanager",
-        },
-      },
-      {
-        path: "/addtarget",
-        name: "addtarget",
-        component: "/targetmanage/targetexchange/addtarget/index",
-        meta: {
-          title: "新增/编辑指标流转记录",
-          icon: "usermanager",
-        },
-      },
-      {
-        path: "/schememanager",
-        name: "schememanager",
-        component: "/targetmanage/schememanager/index",
-        meta: {
-          title: "实施方案管理",
-          icon: "usermanager",
-        },
-      },
-      {
-        path: "/plotmanager",
-        name: "plotmanager",
-        component: "/targetmanage/plotmanager/index",
-        meta: {
-          title: "建新地块管理",
-          icon: "usermanager",
-        },
-      },
-    ],
-  },
-  {
-    path: "/reclamationManager",
-    component: "Layout",
-    meta: {
-      title: "挂钩复垦管理",
-      icon: "icon-zichantudiquanshengmingzhouqihetongjianguan_1",
-    },
-    children: [
-      {
-        path: "/reclamationManager",
-        name: "reclamationManager",
-        component: "/reclamationManager",
-        meta: {
-          title: "复垦项目管理",
-          icon: "usermanager",
-        },
-      },
-      {
-        path: "/dismantlingOld",
-        name: "dismantlingOld",
-        component: "/reclamationManager/dismantlingOld/index",
-        meta: {
-          title: "拆旧地块管理",
-          icon: "usermanager",
-        },
-      },
-      {
-        path: "/unverification",
-        name: "unverification",
-        component: "/reclamationManager/dismantlingOld/unverification/index",
-        meta: {
-          title: "查看/验收未核验的拆旧地块",
-          icon: "usermanager",
-        },
-      },
-      {
-        path: "/verification",
-        name: "verification",
-        component: "/reclamationManager/dismantlingOld/verification/index",
-        meta: {
-          title: "查看/编辑已验收的拆旧地块",
-          icon: "usermanager",
-        },
-      },
-    ],
-  },
-  {
-    path: "/usermanager",
-    component: "Layout",
-    name: "usermanager",
-    meta: {
-      title: "系统管理",
-      icon: "icon-caozuoxitong_mianxing",
-    },
-    children: [
-      {
-        path: "/platformSetting",
-        name: "platformSetting",
-        component: "/system/platformSetting/index",
-        meta: {
-          title: "平台设置",
-          icon: "platformSetting",
-        },
-      },
-      {
-        path: "/areamanager",
-        name: "areamanager",
-        component: "/system/areamanager/index",
-        meta: {
-          title: "区域管理",
-          icon: "areamanager",
-        },
-      },
-      {
-        path: "/addarea",
-        name: "addarea",
-        component: "/system/areamanager/addarea/index",
-        meta: {
-          title: "添加区域",
-          icon: "addarea",
-        },
-      },
-      {
-        path: "/usermanager",
-        name: "usermanager",
-        component: "/system/usermanager/index",
-        meta: {
-          title: "用户管理",
-          icon: "usermanager",
-        },
-      },
-      {
-        path: "/adduser",
-        name: "adduser",
-        component: "/system/usermanager/adduser/index",
-        meta: {
-          title: "添加用户",
-          icon: "adduser",
-        },
-      },
-      {
-        path: "/rolemanager",
-        name: "rolemanager",
-        component: "/system/rolemanager/index",
-        meta: {
-          title: "角色管理",
-          icon: "rolemanager",
-        },
-      },
-      {
-        path: "/addrole",
-        name: "addrole",
-        component: "/system/rolemanager/addrole/index",
-        meta: {
-          title: "添加角色",
-          icon: "addrole",
-        },
-      },
-      {
-        path: "/logmanager",
-        name: "logmanager",
-        component: "/system/logmanager/index",
-        meta: {
-          title: "日志管理",
-          icon: "rolemanager",
-        },
-      },
-      {
-        path: "/opemanager",
-        name: "opemanager",
-        component: "/system/opemanager/index",
-        meta: {
-          title: "运维管理",
-          icon: "rolemanager",
-        },
-      },
-    ],
-  },
-];

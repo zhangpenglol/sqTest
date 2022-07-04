@@ -49,6 +49,7 @@ export default {
       window.location.reload();
       this.$router.push(`/login?redirect=${this.$route.fullPath}`);
     },
+    skipIndex(){},
     homePage(){
         this.$router.push({path: '/home'});
       }

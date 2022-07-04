@@ -50,9 +50,9 @@
       <el-table :data="tableData" border>
         <el-table-column type="selection" width="55"> </el-table-column>
         <el-table-column type="index" label="序号"></el-table-column>
-        <el-table-column prop="operateTime" sort-by label="时间" sortable>
+        <el-table-column prop="createTime" sort-by label="时间" sortable>
           <template slot-scope="scope">
-            {{ $dateFormat(scope.row.operateTime) }}
+            {{ $dateFormat(scope.row.createTime) }}
           </template>
         </el-table-column>
         <el-table-column
@@ -66,12 +66,12 @@
           align="center"
         ></el-table-column>
         <el-table-column
-          prop="operatorPage"
+          prop="phone"
           label="手机号码"
           align="center"
         ></el-table-column>
         <el-table-column
-          prop="rolename"
+          prop="account"
           label="角色"
           align="center"
         ></el-table-column>
@@ -95,13 +95,16 @@
         :page.sync="pageData.pageIndex"
         :limit.sync="pageData.pageSize"
         :autoScroll="false"
-        @pagination="getTableData"
+        @pagination="getUser"
       />
     </div>
   </div>
 </template>
 
 <script>
+import {
+  findUser
+} from "@/api/user.js";
 import Pagination from "@/components/Pagination";
 export default {
   name: "logmanager",
@@ -111,17 +114,7 @@ export default {
   data() {
     return {
       options1: [],
-      tableData: [
-        {
-          rolename: "管理员",
-        },
-        {
-          rolename: "德玛西亚",
-        },
-        {
-          rolename: "暴走萝莉",
-        },
-      ],
+      tableData: [],
       searchValue: null,
       pageData: {
         pageIndex: 1, //当前页
@@ -135,26 +128,20 @@ export default {
     };
   },
   created() {
-    this.getTableData();
+    this.getUser();
   },
   methods: {
-    getTableData() {
+    getUser(){
       let params = {
-        page: this.pageData.pageIndex,
-        rows: this.pageData.pageSize,
-        key: this.inputValue,
-        startTime: this.startTime,
-        endTime: this.endTime,
-      };
-      console.log(params, "search");
-      findOperateLog(params).then((res) => {
-        if (res.status !== 200)
-          return this.$message.error("查询日志管理信息失败!");
-        let { data, total } = res;
-        this.tableData = data;
-        this.pageData.total = total;
-      });
+
+      }
+      findUser().then(res=>{
+        console.log(res)
+        this.tableData = res.data;
+        this.pageData.total = res.total;
+      })
     },
+    
     dateChange(v) {
       //处理修改时间后会报错的问题
       if (v) {

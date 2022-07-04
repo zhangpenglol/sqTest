@@ -3,7 +3,7 @@
   padding: 0;
   margin: 0;
   box-sizing: border-box;
- 
+
 }
 .container-search{  //layout的main区域的搜索条件区域
   margin-bottom: 24px;
@@ -12,9 +12,9 @@
   display: flex;
   justify-content: space-between;
   box-shadow: 0 0 4px  rgba(0,13,70,0.1);
-font-size: 14px;
-color: #333333;
-  .iconfont{   
+  font-size: 14px;
+  color: #333333;
+  .iconfont{
     font-size: 12px;
   }
 }
@@ -25,7 +25,7 @@ color: #333333;
 }
 .table-handles{  //表格上的操作栏
   margin-bottom: 24px;
-  .iconfont{   
+  .iconfont{
     font-size: 12px;
   }
   .icon-shanchu{ //删除的额外坐下调整
@@ -51,7 +51,7 @@ color: #333333;
 
 /*
 *删除的文本按钮
-*/ 
+*/
 .delete-icon{
   color:rgb(255, 67, 67)
 }
@@ -74,7 +74,7 @@ color: #333333;
   margin-top: 24px;
 }
 .container-search-secound-keep{
-    display:  none;
+  display:  none;
 }
 /*
 *解决table隐藏超出内容后，操作的弹出无法显示
@@ -82,4 +82,46 @@ color: #333333;
 .caozuo-column{
   // overflow: visible;
 
+}
+//操作的点点
+.ddd-title{
+  font-size:24px;
+  color: #3757E2;
+  cursor:pointer;
+}
+
+//详情页的tab样式
+.el-tabs--border-card {
+  box-shadow: none;
+  border: none;
+}
+.el-tabs--border-card>.el-tabs__header{
+  background:#ECEFF7;
+  border: 0.005208rem solid #dcdfe6;
+
+}
+.el-tabs__item{
+  height: 52px;
+  line-height: 52px;
+}
+.el-tabs__item.is-active{
+  height: 53px;
+}
+.layer-title,
+.form-title {
+  font-weight: normal;
+}
+.form-title {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 26px;
+}
+.layer-title {
+  font-size: 14px;
+  color: #3757e2;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+.form{
+  margin-top: 10px;
 }

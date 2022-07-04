@@ -3,7 +3,7 @@
  * @Author: 李增辉
  * @Date: 2022-04-13 09:46:52
  * @LastEditors: 李增辉
- * @LastEditTime: 2022-04-13 10:25:40
+ * @LastEditTime: 2022-04-15 10:57:34
 -->
 
 <template>
@@ -14,9 +14,12 @@
     :limit="maxlimit"
     multiple
     class="xx-upload"
+    :file-list="fileList"
     :http-request="upload_request"
     :before-upload="before_upload"
     :before-remove="before_remove"
+    :on-remove="on_remove"
+    :on-exceed="on_exceed"
   >
     <i class="el-icon-upload"></i>
     <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
@@ -26,6 +29,9 @@
   </el-upload>
 </template>
 <script>
+import {deleteFileInfo, saveFileInfo} from "@/api/common";
+import {deleteSpecialManage} from "@/api/subjectPlan";
+
 /**
  * 初始化：
  *       1.设置文件上传最大个数
@@ -39,6 +45,15 @@
  */
 export default {
   props: {
+    id:{
+      type: Number,
+    },
+    moduleName:{
+      type: String,
+    },
+    fileInfoListShow:{
+      type: Array,
+    },
     maxlimit: {
       require: false,
       type: Number,
@@ -52,7 +67,7 @@ export default {
     fileRulesType: {
       require: false,
       type: Array,
-      default: [".jpg", ".png", ".pdf"],
+      default: ()=>[".jpg", ".png", ".pdf"],
     },
     url: {
       require: false,
@@ -63,9 +78,18 @@ export default {
   data() {
     return {
       formData: undefined,
-      uid: undefined,
-      resData: [],
+      fileList: [],
+      fileInfoList: [],
     };
+  },
+  watch:{
+    fileInfoListShow(val){
+      this.fileList = val;
+    },
+    fileList(){},
+  },
+  created() {
+
   },
   methods: {
     before_upload(file) {
@@ -73,45 +97,50 @@ export default {
       const fileType = file.type.substring(index + 1).toLowerCase();
       const isLegal = this.fileRulesType.join("").includes(fileType);
       if (!isLegal) {
-        /**
-         * 提示文件格式不支持
-         */
-        return;
+        this.$message.warning("图片格式不对")
+        return false;
       }
       const isLt100M = file.size / 1024 / 1024 > 100;
       if (isLt100M) {
-        /**
-         * 提示文件的大小不能大于100M
-         */
-        return;
+        this.$message.warning("文件大小不能大于100M")
+        return false;
       }
       const formData = new FormData();
+      const id = this.id === undefined ? "" : this.id;
+      const moduleName = this.moduleName === undefined ? "" : this.moduleName;
+      console.log(file,'filefilefile')
       formData.append("file", file);
-      formData.append("fileType", "image");
+      formData.append("fileType", file.type);
+      formData.append("moduleName", moduleName);
+      formData.append("projectId", id);
       this.formData = formData;
-      this.uid = file.uid;
     },
-    upload_request() {
-      //等后端接口确定了后再实现
-      // const {
-      //   data: { path, id },
-      // } = await upload(formData);
-      // const item = {
-      //   path,
-      //   id,
-      //   uid: this.uid,
-      // };
-      // this.resData.push(item);
-      // this.$emit("getfileInfo", this.resData);
+    async upload_request(file) {
+      const res = await saveFileInfo(this.formData);
+      if(res.status !== 200) return this.$message.error("上传失败");
+      this.fileList.push(res.data)
+      this.$emit("getfileInfo", this.fileList);
+      if (file && file.status==="success") {
+        return this.fileList;
+      }
     },
-    before_remove(file) {
-      //等后端接口确定了后再实现
-      // this.resData.forEach((item, index) => {
-      //   if (item.uid === file.uid) {
-      //     return this.resData.splice(index, 1);
-      //   }
-      // });
-      // this.$emit("getfileInfo", this.resData);
+    before_remove(file,fileList) {
+      console.log(file,fileList,'before_remove')
+      if (file && file.status==="success") {
+        return this.$confirm(`确定删除 ${ file.fileName }？`);
+      }
+    },
+    on_remove(file, fileList){
+      if (file && file.status==="success") {
+        deleteFileInfo(file.id).then((res) => {
+          if(res.status === 200) return this.$message.success("删除成功");
+          console.log(fileList,"删除的列表")
+          this.$emit("getfileInfo", fileList);
+        });
+      }
+    },
+    on_exceed(){
+      this.$message.warning("最多可上传5个附件");
     },
   },
 };

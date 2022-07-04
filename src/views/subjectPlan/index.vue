@@ -9,29 +9,53 @@
   <div>
     <div class="container-search">
       <div>
-        <el-cascader
-          :options="options"
-          :props="{ checkStrictly: true }"
-          clearable
-        ></el-cascader>
-        <el-select placeholder="规划期(年)">
-          <el-option label="选项1" value="选项1"></el-option>
-          <el-option label="选项2" value="选项2"></el-option>
-          <el-option label="选项3" value="选项3"></el-option>
-          <el-option label="选项1" value="选项1"></el-option>
-          <el-option label="选项2" value="选项2"></el-option>
-          <el-option label="选项3" value="选项3"></el-option>
-          <el-option label="选项1" value="选项1"></el-option>
-          <el-option label="选项2" value="选项2"></el-option>
-          <el-option label="选项3" value="选项3"></el-option>
-          <el-option label="选项1" value="选项1"></el-option>
-          <el-option label="选项2" value="选项2"></el-option>
-          <el-option label="选项3" value="选项3"></el-option>
+        <el-select placeholder="所属区域" v-model="queryParmas.region">
+          <el-option
+            v-for="item in regionOptions"
+            :key="item.regionCode"
+            :label="item.regionName"
+            :value="item.regionCode"
+          >
+          </el-option>
         </el-select>
+        <el-date-picker
+            class="input_date"
+            value-format="yyyy"
+            v-model="queryParmas.startYear"
+            type="year"
+            placeholder="规划期开始年份">
+        </el-date-picker>
+        -
+        <el-date-picker
+            class="input_date"
+            value-format="yyyy"
+            v-model="queryParmas.endYear"
+            type="year"
+            placeholder="规划期结束年份">
+        </el-date-picker>
+<!--        <el-select placeholder="规划期(年)" v-model="quetyPlanDate">-->
+<!--          <el-option-->
+<!--            v-for="item in planDateOptions"-->
+<!--            :key="item.itemCode"-->
+<!--            :label="item.itemCode"-->
+<!--            :value="item.itemValue"-->
+<!--          >-->
+<!--          </el-option>-->
+<!--        </el-select>-->
       </div>
       <div>
-        <el-button type="primary" icon="iconfont icon-chaxun">查询</el-button>
-        <el-button type="primary" icon="iconfont icon-zhongzhi">重置</el-button>
+        <el-button
+          type="primary"
+          icon="iconfont icon-chaxun"
+          @click="getList"
+          >查询</el-button
+        >
+        <el-button
+          type="primary"
+          icon="iconfont icon-zhongzhi"
+          @click="resetQuery"
+          >重置</el-button
+        >
       </div>
     </div>
     <div class="container-main">
@@ -39,33 +63,38 @@
         <el-button
           type="primary"
           icon="iconfont icon-addNode"
-          @click="router.push({ path: '/addsubject' })"
-          >新增</el-button
-        >
-        <el-button type="primary" icon="iconfont icon-shanchu">删除</el-button>
+          @click="$router.push({ name: 'addsubject', params: { type: 'isAdd' } })"
+        >新增</el-button>
+        <el-button type="primary" icon="iconfont icon-shanchu" @click="handleDropdownChange('delete')">批量删除</el-button>
       </div>
       <el-table
+        v-loading="loading"
         ref="singleTable"
         :data="tableData"
-        @current-change="handleCurrentChange"
+        @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55"> </el-table-column>
         <el-table-column type="index" width="70" label="序号">
         </el-table-column>
-        <el-table-column property="date" label="规划名称"> </el-table-column>
-        <el-table-column property="name" label="所属区域"> </el-table-column>
-        <el-table-column property="address" label="规划期（年）">
+        <el-table-column property="planName" label="规划名称">
+        </el-table-column>
+        <el-table-column property="regionName" label="所属区域">
+        </el-table-column>
+        <el-table-column label="规划期（年）">
+          <template slot-scope="scope">
+            {{ `${scope.row.startYear}-${scope.row.endYear} ` }}
+          </template>
         </el-table-column>
         <el-table-column
-          property="address"
+          property="demolishedArea"
           label="农村建设用地拆旧区总面积（公顷）"
         >
         </el-table-column>
-        <el-table-column property="address" label="复垦面积（公顷）">
+        <el-table-column property="reclamationArea" label="复垦面积（公顷）">
         </el-table-column>
-        <el-table-column property="address" label="建新面积（公顷）">
+        <el-table-column property="balanceArea" label="建新面积（公顷）">
         </el-table-column>
-        <el-table-column property="address" label="结余面积（公顷）">
+        <el-table-column property="surplusArea" label="结余面积（公顷）">
         </el-table-column>
         <el-table-column property="address" label="地块上图"> </el-table-column>
         <el-table-column property="address">
@@ -76,330 +105,165 @@
             </div>
           </template>
           <template slot-scope="scope">
-            <xx-popup>
-              <xx-item
-                @click.native="xxx"
-                className="el-icon-info"
-                title="查看"
-              />
-              <xx-item className="el-icon-info" title="修改" />
-              <xx-item title="删除" @click.native="ddd" />
-              <xx-item title="地图审查" />
-            </xx-popup>
+            <el-dropdown
+              trigger="click"
+              @command="(type) => handleDropdownChange(type, scope.row.id)"
+            >
+              <span class="el-dropdown-link">
+                <i class="ddd-title">...</i>
+              </span>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item
+                  icon="iconfont icon-xiangqingchakan"
+                  command="see"
+                  >查看</el-dropdown-item
+                >
+                <el-dropdown-item icon="iconfont icon-xiugai" command="update"
+                  >修改</el-dropdown-item
+                >
+                <el-dropdown-item icon="iconfont icon-shanchu" command="delete"
+                  >删除</el-dropdown-item
+                >
+<!--                <el-dropdown-item-->
+<!--                  icon="iconfont icon-zhandianditu"-->
+<!--                  command="map"-->
+<!--                  >地图审查</el-dropdown-item-->
+<!--                >-->
+              </el-dropdown-menu>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
       <xx-pagination
         @getPagination="getPagination"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="400"
+        :total="total"
+        :limit="queryParmas.rows"
       />
     </div>
   </div>
 </template>
 <script>
+import { findSpecialManage, deleteSpecialManage } from "@/api/subjectPlan";
+import { findArcSysArea, findDictDetail } from "@/api/common";
 export default {
   data() {
     return {
-      options: [
-        {
-          value: "zhinan",
-          label: "指南",
-          children: [
-            {
-              value: "shejiyuanze",
-              label: "设计原则",
-              children: [
-                {
-                  value: "yizhi",
-                  label: "一致",
-                },
-                {
-                  value: "fankui",
-                  label: "反馈",
-                },
-                {
-                  value: "xiaolv",
-                  label: "效率",
-                },
-                {
-                  value: "kekong",
-                  label: "可控",
-                },
-              ],
-            },
-            {
-              value: "daohang",
-              label: "导航",
-              children: [
-                {
-                  value: "cexiangdaohang",
-                  label: "侧向导航",
-                },
-                {
-                  value: "dingbudaohang",
-                  label: "顶部导航",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          value: "zujian",
-          label: "组件",
-          children: [
-            {
-              value: "basic",
-              label: "Basic",
-              children: [
-                {
-                  value: "layout",
-                  label: "Layout 布局",
-                },
-                {
-                  value: "color",
-                  label: "Color 色彩",
-                },
-                {
-                  value: "typography",
-                  label: "Typography 字体",
-                },
-                {
-                  value: "icon",
-                  label: "Icon 图标",
-                },
-                {
-                  value: "button",
-                  label: "Button 按钮",
-                },
-              ],
-            },
-            {
-              value: "form",
-              label: "Form",
-              children: [
-                {
-                  value: "radio",
-                  label: "Radio 单选框",
-                },
-                {
-                  value: "checkbox",
-                  label: "Checkbox 多选框",
-                },
-                {
-                  value: "input",
-                  label: "Input 输入框",
-                },
-                {
-                  value: "input-number",
-                  label: "InputNumber 计数器",
-                },
-                {
-                  value: "select",
-                  label: "Select 选择器",
-                },
-                {
-                  value: "cascader",
-                  label: "Cascader 级联选择器",
-                },
-                {
-                  value: "switch",
-                  label: "Switch 开关",
-                },
-                {
-                  value: "slider",
-                  label: "Slider 滑块",
-                },
-                {
-                  value: "time-picker",
-                  label: "TimePicker 时间选择器",
-                },
-                {
-                  value: "date-picker",
-                  label: "DatePicker 日期选择器",
-                },
-                {
-                  value: "datetime-picker",
-                  label: "DateTimePicker 日期时间选择器",
-                },
-                {
-                  value: "upload",
-                  label: "Upload 上传",
-                },
-                {
-                  value: "rate",
-                  label: "Rate 评分",
-                },
-                {
-                  value: "form",
-                  label: "Form 表单",
-                },
-              ],
-            },
-            {
-              value: "data",
-              label: "Data",
-              children: [
-                {
-                  value: "table",
-                  label: "Table 表格",
-                },
-                {
-                  value: "tag",
-                  label: "Tag 标签",
-                },
-                {
-                  value: "progress",
-                  label: "Progress 进度条",
-                },
-                {
-                  value: "tree",
-                  label: "Tree 树形控件",
-                },
-                {
-                  value: "pagination",
-                  label: "Pagination 分页",
-                },
-                {
-                  value: "badge",
-                  label: "Badge 标记",
-                },
-              ],
-            },
-            {
-              value: "notice",
-              label: "Notice",
-              children: [
-                {
-                  value: "alert",
-                  label: "Alert 警告",
-                },
-                {
-                  value: "loading",
-                  label: "Loading 加载",
-                },
-                {
-                  value: "message",
-                  label: "Message 消息提示",
-                },
-                {
-                  value: "message-box",
-                  label: "MessageBox 弹框",
-                },
-                {
-                  value: "notification",
-                  label: "Notification 通知",
-                },
-              ],
-            },
-            {
-              value: "navigation",
-              label: "Navigation",
-              children: [
-                {
-                  value: "menu",
-                  label: "NavMenu 导航菜单",
-                },
-                {
-                  value: "tabs",
-                  label: "Tabs 标签页",
-                },
-                {
-                  value: "breadcrumb",
-                  label: "Breadcrumb 面包屑",
-                },
-                {
-                  value: "dropdown",
-                  label: "Dropdown 下拉菜单",
-                },
-                {
-                  value: "steps",
-                  label: "Steps 步骤条",
-                },
-              ],
-            },
-            {
-              value: "others",
-              label: "Others",
-              children: [
-                {
-                  value: "dialog",
-                  label: "Dialog 对话框",
-                },
-                {
-                  value: "tooltip",
-                  label: "Tooltip 文字提示",
-                },
-                {
-                  value: "popover",
-                  label: "Popover 弹出框",
-                },
-                {
-                  value: "card",
-                  label: "Card 卡片",
-                },
-                {
-                  value: "carousel",
-                  label: "Carousel 走马灯",
-                },
-                {
-                  value: "collapse",
-                  label: "Collapse 折叠面板",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          value: "ziyuan",
-          label: "资源",
-          children: [
-            {
-              value: "axure",
-              label: "Axure Components",
-            },
-            {
-              value: "sketch",
-              label: "Sketch Templates",
-            },
-            {
-              value: "jiaohu",
-              label: "组件交互文档",
-            },
-          ],
-        },
-      ],
-      tableData: [
-        {
-          date: "2016-05-02",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1518 弄",
-        },
-        {
-          date: "2016-05-04",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1517 弄",
-        },
-        {
-          date: "2016-05-01",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1519 弄",
-        },
-        {
-          date: "2016-05-03",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1516 弄",
-        },
-      ],
+      loading: false,
+      queryParmas: {
+        page: 1,
+        rows: 10,
+        regionCode: "",
+        startYear: "",
+        endYear: "",
+      },
+      regionOptions: [],
+      planDateOptions: [],
+      tableData: [],
+      total: 0,
+      multipleSelection:[],
     };
   },
+  created() {
+    this.init();
+  },
+  // computed: {
+  //   quetyPlanDate: {
+  //     get: function () {
+  //       return "";
+  //     },
+  //     set: function (newValue) {
+  //       console.log(
+  //         newValue,
+  //         "将传递的数值解析为传递的查询参数中的queryParmas.startYear,queryParmas.en  dYear "
+  //       );
+  //     },
+  //   },
+  // },
+
   methods: {
-    xxx() {
-      alert("查看被点击了");
+    init() {
+      this.getList();
+      this.getRegion();
+      this.getDict();
     },
-    ddd() {
-      alert("删除被点击了");
+    getRegion() {
+      findArcSysArea().then((res) => {
+        this.regionOptions = res.data;
+      });
+    },
+    getDict() {
+      findDictDetail("ghq").then((res) => {
+        this.planDateOptions = res.data;
+      });
+    },
+    resetQuery() {
+      this.queryParmas={
+        page: 1,
+        rows: 10,
+        regionCode: "",
+        startYear: "",
+        endYear: "",
+      }
+    },
+    getList() {
+      this.loading = true;
+      findSpecialManage(this.queryParmas).then((res) => {
+        this.tableData = res.data;
+        this.total = res.total;
+        this.loading = false;
+      });
+    },
+    getPagination({ limit, page }) {
+      this.queryParmas.rows = limit;
+      this.queryParmas.page = page;
+      this.getList();
+    },
+    handleSelectionChange(val) {
+      let ids = []
+      val.map(item => {
+        ids.push(item.id)
+      })
+      this.multipleSelection = ids;
+    },
+    handleDropdownChange(type, id) {
+      if (type === "see") {
+        this.$router.push({
+          name: "addsubject",
+          params: { type: "see", id: id },
+        });
+      } else if (type === "update") {
+        this.$router.push({
+          name: "addsubject",
+          params: { type: "isUpdate", id: id },
+        });
+      } else if (type === "delete") {
+        if(!id){
+          if (this.multipleSelection.length === 0) return this.$message.warning("请先勾选删除项");
+        }else {
+          this.multipleSelection = null;
+        }
+        id = this.multipleSelection == null ?  id : this.multipleSelection.join(',');
+        this.$confirm('删除后不可恢复，是否确认删除?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          deleteSpecialManage(id).then((res) => {
+            this.getList();
+            this.multipleSelection = [];
+          });
+        }).catch(() => {
+          this.$message.info("已取消删除");
+        });
+      } else if (type === "map") {
+      }
     },
   },
 };
 </script>
+<style scoped lang="scss">
+.input_date{
+
+}
+</style>

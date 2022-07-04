@@ -1,10 +1,4 @@
-/*
- * @Descripttion:
- * @Author: 李增辉
- * @Date: 2022-04-25 09:10:02
- * @LastEditors: 李增辉
- * @LastEditTime: 2022-04-26 14:24:05
- */
+import "./mock";
 import Vue from "vue";
 import App from "./App.vue";
 import router from "./router/index";
@@ -21,7 +15,9 @@ import "./permission.js";
 import * as echarts from "echarts";
 import dateFormat from "@/utils/dateFormat.js";
 import "@/components/commonComponents/globals.js"; //自动全局挂载组件
+import imgLazy from '@/directive/imgLazy.js'
 
+Vue.directive('imgLazy', imgLazy)
 Vue.config.productionTip = false;
 
 Vue.prototype.$echarts = echarts;

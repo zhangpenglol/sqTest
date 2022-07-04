@@ -4,6 +4,7 @@
       :collapse-transition="false"
       :unique-opened="true"
       :collapse="isCollapse"
+      :class="{ul_pad:isCollapse}"
       router
       :default-active="$route.path"
       class="el-menu-vertical-demo"
@@ -15,23 +16,23 @@
     >
       <template v-for="item in menulist">
         <el-submenu
-          v-if="item.children && item.children.length > 0"
+          v-if="item.child && item.child.length > 0"
           :index="item.path"
           :key="item.path"
         >
           <template slot="title">
-            <i class="iconfont" :class="item.meta.icon"></i>
-            <span>{{ item.meta.title}}</span>
+            <i class="iconfont" :class="item.meta ? item.meta.icon : ''"></i>
+            <span>{{ item.meta ? item.meta.title : ''}}</span>
           </template>
 
           <template>
-            <sidebar-item :menulist="item.children"></sidebar-item>
+            <sidebar-item :menulist="item.child"></sidebar-item>
           </template>
         </el-submenu>
 
         <el-menu-item v-else :key="item.path" :index="item.path">
-          <i class="iconfont" :class="item.meta.icon"></i>
-          <span slot="title">{{ item.meta.title }}</span>
+          <i class="iconfont" :class="item.meta ? item.meta.icon : ''"></i>
+          <span slot="title">{{ item.meta ? item.meta.title : '' }}</span>
         </el-menu-item>
       </template>
     </el-menu>
@@ -101,4 +102,10 @@ export default {
   background-repeat: no-repeat;
   background-size: 100% 100%;
 }
+/* .el-menu /deep/ .el-tooltip,.el-submenu__title{
+  padding: 0px 20px !important;
+}
+.el-submenu /deep/ .el-submenu__title{
+  padding: 0px 20px !important;
+} */
 </style>

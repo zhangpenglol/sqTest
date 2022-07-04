@@ -9,79 +9,113 @@
   <div class="form">
     <el-form ref="form" :model="form" label-width="113px">
       <el-form-item label="地块流转合同号">
-        <el-input v-model="form.name"></el-input>
+        <el-input v-model="form.contractNo"></el-input>
       </el-form-item>
 
-      <el-form-item label="实施方案批文号">
-        <el-input v-model="form.name"></el-input>
-      </el-form-item>
       <el-form-item label="流转日期">
-        <el-select
-          v-model="form.region"
-          placeholder="请选择活动区域"
-          class="is-sesect-icon"
+        <el-date-picker
+          v-model="form.movingDate"
+          type="date"
+          placeholder="选择日期"
         >
-          <el-option label="区域一" value="shanghai"></el-option>
-          <el-option label="区域二" value="beijing"></el-option>
-        </el-select>
+        </el-date-picker>
       </el-form-item>
       <el-form-item label="成交价">
-        <el-input v-model="form.name"></el-input>
+        <el-input v-model="form.transactionPrice"></el-input>
       </el-form-item>
       <el-form-item label="竞得人">
-        <el-input v-model="form.name"></el-input>
+        <el-input v-model="form.competitivePerson"></el-input>
       </el-form-item>
       <el-form-item label="成交指标指标面积">
-        <el-input v-model="form.name"></el-input>
+        <el-input v-model="form.transactionArea"></el-input>
       </el-form-item>
       <el-form-item class="upload-list" label="上传附件">
         <xx-upload-list></xx-upload-list>
       </el-form-item>
     </el-form>
     <div class="handles">
-      <el-button type="primary">确定</el-button>
-      <el-button>取消</el-button>
+      <el-button type="primary" @click="handleConfirm">确定</el-button>
+      <el-button
+        @click="
+          $router.push({
+            name: 'targetexchange',
+          })
+        "
+        >取消</el-button
+      >
     </div>
   </div>
 </template>
 
 <script>
+import {
+  saveTargetMoving,
+  updateTargetMoving,
+} from "@/api/targetmanage/targetexchange";
 export default {
+  props: {
+    res: {
+      require: true,
+    },
+  },
+
   data() {
     return {
-      tableData: [
-        {
-          date: "2016-05-02",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 ",
-        },
-        {
-          date: "2016-05-04",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路",
-        },
-        {
-          date: "2016-05-01",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路",
-        },
-        {
-          date: "2016-05-03",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路",
-        },
-      ],
       form: {
-        name: "",
-        region: "",
-        date1: "",
-        date2: "",
-        delivery: false,
-        type: [],
-        resource: "",
-        desc: "",
+        id: undefined,
+        contractNo: "",
+        movingDate: "",
+        transactionPrice: "",
+        competitivePerson: "",
+        transactionArea: "",
       },
     };
+  },
+
+  watch: {
+    res: function (newVal, oldVal) {
+      for (let key in this.form) {
+        this.form[key] = newVal[key];
+      }
+    },
+  },
+  created() {},
+  methods: {
+    handleConfirm() {
+      if (this.$route.params.type === "isUpdate") {
+        updateTargetMoving(this.form)
+          .then((res) => {
+            this.$message({
+              type: "success",
+              message: "成功",
+            });
+            this.$router.push({ name: "targetexchange" });
+          })
+          .catch((res) => {
+            this.$message({
+              type: "error",
+              message: "失败",
+            });
+            this.$router.push({ name: "targetexchange" });
+          });
+      } else {
+        saveTargetMoving(this.form)
+          .then((res) => {
+            this.$message({
+              type: "success",
+              message: "成功",
+            });
+            this.$router.push({ name: "targetexchange" });
+          })
+          .catch((res) => {
+            this.$message({
+              type: "error",
+              message: "失败",
+            });
+            this.$router.push({ name: "targetexchange" });
+          });
+      }
+    },
   },
 };
 </script>

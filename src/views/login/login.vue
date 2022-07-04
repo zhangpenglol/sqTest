@@ -91,8 +91,8 @@ export default {
   data() {
     return {
       loginForm: {
-        name: "acfun",
-        pwd: "123456",
+        name: "",
+        pwd: "",
         verifyCodes: "",
         finalcodekey: "",
         verification: "",
@@ -112,13 +112,13 @@ export default {
   created() {},
   mounted() {},
   methods: {
-    ...mapActions(["loginInfo"]),    
+    ...mapActions(["loginInfo"]),
     handleLogin() {
       this.loginInfo(this.loginForm)
         .then((res) => {
           if (res.status == 200) {
             this.$message.success("登录成功");
-            this.$router.push({path:'/home'});
+            this.$router.push({ path: "/home" });
             this.loading = false;
           }
         })

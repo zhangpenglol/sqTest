@@ -14,7 +14,7 @@
         <el-button
           icon="el-icon-search"
           class="input_width6"
-          @click="getTableData"
+          @click="getAreaList"
           >查询</el-button
         >
         <el-button icon="el-icon-refresh" class="input_width6" @click="reset"
@@ -35,38 +35,58 @@
         >
       </div>
       <el-table :data="tableData" border>
-        <el-table-column
-      type="selection"
-      width="55">
-    </el-table-column>
+        <el-table-column type="selection" width="55"> </el-table-column>
         <el-table-column type="index" label="序号"></el-table-column>
         <el-table-column
-          prop="operator"
+          prop="regionName"
           label="区域名称"
           align="center"
         ></el-table-column>
         <el-table-column
-          prop="userName"
+          prop="regionNameEs"
           label="拼音/英文"
           align="center"
         ></el-table-column>
         <el-table-column
-          prop="operatorPage"
+          prop="regionType"
           label="区划类型"
           align="center"
         ></el-table-column>
         <el-table-column
-          prop="rolename"
+          prop="isEnable"
           label="是否开放显示"
           align="center"
         ></el-table-column>
-        <el-table-column prop="IP" label="IP" align="center"></el-table-column>
         <el-table-column label="操作" align="center">
-          <template slot-scope="scope" align="center">
-            <span @click="handleDelete(scope.row.id)">
-              <i class="el-icon-delete icon_btn icon_delete"></i>
-              <span class="txt_btn txt_delete">删除</span>
-            </span>
+          <template slot="header" slot-scope="scope">
+            <div class="table-caozuo">
+              <span>操作</span>
+              <i class="iconfont icon-xitongweihu"></i>
+            </div>
+          </template>
+          <template slot-scope="scope">
+            <!-- <el-dropdown @command="handleCommand($event)"> -->
+              <el-dropdown @command="(e) => handleCommand(e,scope.row)">
+              <span class="el-dropdown-link">
+                <i class="ddd-title">...</i>
+              </span>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item icon="iconfont icon-xiangqingchakan"
+                  command="a">查看</el-dropdown-item
+                >
+                <el-dropdown-item icon="iconfont icon-xiugai"
+                  command="b">修改</el-dropdown-item
+                >
+                <el-dropdown-item
+                  icon="iconfont icon-shanchu"
+                  @click="handleDelete(scope.row)"
+                  >删除</el-dropdown-item
+                >
+                <el-dropdown-item icon="iconfont icon-zhandianditu"
+                  >地图审查</el-dropdown-item
+                >
+              </el-dropdown-menu>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -75,7 +95,7 @@
         :page.sync="pageData.pageIndex"
         :limit.sync="pageData.pageSize"
         :autoScroll="false"
-        @pagination="getTableData"
+        @pagination="getAreaList"
       />
     </div>
   </div>
@@ -83,6 +103,12 @@
 
 <script>
 import Pagination from "@/components/Pagination";
+import {
+  findArcSysArea,
+  findAreaCode,
+  addAndUpdateAreaList,
+  deleteAllAreaList,
+} from "@/api/area.js";
 export default {
   name: "logmanager",
   components: {
@@ -115,21 +141,12 @@ export default {
     };
   },
   created() {
-    this.getTableData();
+    this.getAreaList();
   },
   methods: {
-    getTableData() {
-      let params = {
-        page: this.pageData.pageIndex,
-        rows: this.pageData.pageSize,
-        key: this.inputValue,
-        startTime: this.startTime,
-        endTime: this.endTime,
-      };
-      console.log(params, "search");
-      findOperateLog(params).then((res) => {
-        if (res.status !== 200)
-          return this.$message.error("查询日志管理信息失败!");
+    getAreaList() {
+      findArcSysArea().then((res) => {
+        if (res.status !== 200) return this.$message.error("查询信息失败!");
         let { data, total } = res;
         this.tableData = data;
         this.pageData.total = total;
@@ -151,21 +168,30 @@ export default {
       this.endTime = "";
       this.inputValue = null;
       this.pageData.pageIndex = 1;
-      this.getTableData();
+      this.getAreaList();
+    },
+    handleCommand(e,aa){
+      console.log(e,'22222')
+      console.log(aa,'22222')
+    },
+    handleEdit(id){
+      console.log('111111')
+      this.$router.push({name:'addarea',params:{id}})
     },
     handleDelete(id) {
+      console.log('111111324324')
       let params = {
         id: id,
       };
       deleteOperatelog(params).then((res) => {
         if (res.status !== 200) return this.$message.error("删除日志管理失败!");
         this.$message.success("删除日志管理成功!");
-        this.getTableData();
+        this.getAreaList();
       });
     },
-    addArea(){
-      this.$router.push({path:'/addarea'});
-    }
+    addArea() {
+      this.$router.push({ path: "/addarea" });
+    },
   },
 };
 </script>
@@ -199,6 +225,9 @@ export default {
 }
 .txt_delete {
   color: #ff2444;
+}
+.el-dropdown-link {
+  cursor: pointer;
 }
 </style>
 

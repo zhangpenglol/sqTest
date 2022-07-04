@@ -79,6 +79,7 @@ export default {
   .sidebar_box {
     transition: width 0.28s;
     width: $sideBarWidth !important;
+    min-width: $min-width !important;
     height: 100%;
     position: fixed;
     top: 80px;

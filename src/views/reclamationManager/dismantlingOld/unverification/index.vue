@@ -6,136 +6,117 @@
  * @LastEditTime: 2022-04-14 14:27:33
 -->
 <template>
-  <div class="container-main">
-    <h2 class="form-title">查看/验收未核验拆旧地块</h2>
-    <div class="form">
-      <el-form ref="form" :model="form" label-width="113px">
-        <el-form-item label="规划名称">
-          <el-input v-model="form.name"></el-input>
-        </el-form-item>
-        <el-form-item label="建新面积（公顷）">
-          <el-input v-model="form.name"></el-input>
-        </el-form-item>
-        <el-form-item label="所属区域">
-          <el-select
-            v-model="form.region"
-            placeholder="请选择活动区域"
-            class="is-sesect-icon"
-          >
-            <el-option label="区域一" value="shanghai"></el-option>
-            <el-option label="区域二" value="beijing"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="结余面积（公顷）">
-          <el-input v-model="form.name"></el-input>
-        </el-form-item>
-        <el-form-item label="规划期（年）">
-          <el-select
-            v-model="form.region"
-            placeholder="请选择活动区域"
-            class="is-sesect-icon"
-          >
-            <el-option label="区域一" value="shanghai"></el-option>
-            <el-option label="区域二" value="beijing"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="农村建设用地拆旧区总面积（公顷）">
-          <el-input v-model="form.name"></el-input>
-        </el-form-item>
-        <el-form-item label="复垦面积（公顷）">
-          <el-input v-model="form.name"></el-input>
-        </el-form-item>
-        <el-form-item class="upload-list" label="上传附件">
-          <xx-upload-list></xx-upload-list>
-        </el-form-item>
-      </el-form>
+  <div class="container-main" v-loading="loading">
+    <h2 class="form-title">
+      {{
+        $route.query.type == "see" ? "查看未核验拆旧地块" : "验收未核验拆旧地块"
+      }}
+    </h2>
+    <div class="grid">
+      <div>地块编号</div>
+      <div>{{ info.landCode }}</div>
+      <div>所属区域</div>
+      <div>{{ info.regionName }}</div>
+      <div>项目编号</div>
+      <div>{{ info.projectNo }}</div>
+      <div>地块建设规模</div>
+      <div>{{ info.buildArea }}</div>
+      <div>新增农用地面积</div>
+      <div>{{ info.farmingArea }}</div>
+      <div>新增耕地面积</div>
+      <div>{{ info.ploughArea }}</div>
+      <div>耕地类型</div>
+      <div>{{ info.ploughType }}</div>
+      <div>权属性质</div>
+      <div>{{ info.ownershipProperty }}</div>
+      <div>复垦前地类</div>
+      <div>{{ info.reclamationAgoType }}</div>
+      <div>复垦后新增耕地质量等级</div>
+      <div>{{ info.laterLandGrade }}</div>
+      <div>验收文号</div>
+      <div>{{ info.receptionProof }}</div>
+      <div>验收日期</div>
+      <div>{{ info.receptionTime }}</div>
+      <div>论证文件</div>
+      <div>{{ info.fileId }}</div>
     </div>
     <div class="im-layer">
       <h2 class="layer-title">复垦进度</h2>
-      <el-table :data="tableData">
-        <el-table-column prop="date" label="位置(经纬度)"> </el-table-column>
-        <el-table-column prop="name" label="方位"> </el-table-column>
-        <el-table-column prop="address" label="现状描述"> </el-table-column>
-        <el-table-column prop="name" label="照片"> </el-table-column>
-        <el-table-column prop="address" label="进度上报日期"> </el-table-column>
-        <el-table-column label="操作">
-          <template slot-scope="scope">
-            <el-button type="text" icon="iconfont icon-xiugai">修改</el-button>
-            <el-button
-              type="text"
-              class="delete-icon"
-              icon="iconfont icon-shanchu"
-              >删除</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
+      <ReclamationPlan />
     </div>
     <div class="handles">
-      <el-button type="primary">确定</el-button>
-      <el-button type="primary">确认验收</el-button>
+      <el-button
+        type="primary"
+        v-if="$route.query.type == 'see'"
+        @click="handleConfirm"
+        >确定</el-button
+      >
+      <el-button type="primary" v-else @click="handleAccept"
+        >确认验收</el-button
+      >
       <el-button>取消</el-button>
     </div>
   </div>
 </template>
 <script>
+import {
+  findOldLandDetailById,
+  updateLandDemolitionOld,
+} from "@/api/dismantlingOld";
+import ReclamationPlan from "../components/ReclamationPlan";
 export default {
+  components: { ReclamationPlan },
   data() {
     return {
-      tableData: [
-        {
-          date: "2016-05-02",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 ",
-        },
-        {
-          date: "2016-05-04",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路",
-        },
-        {
-          date: "2016-05-01",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路",
-        },
-        {
-          date: "2016-05-03",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路",
-        },
-      ],
-      form: {
-        name: "",
-        region: "",
-        date1: "",
-        date2: "",
-        delivery: false,
-        type: [],
-        resource: "",
-        desc: "",
-      },
+      loading: false,
+
+      info: {},
     };
+  },
+  created() {
+    this.init();
+  },
+  methods: {
+    init() {
+      this.getList();
+    },
+    getList() {
+      this.loading = true;
+      findOldLandDetailById(this.$route.query.id).then((res) => {
+        this.info = res.data.landDetail;
+        this.loading = false;
+      });
+    },
+    handleAccept() {
+      updateLandDemolitionOld({
+        id: this.$route.query.id,
+        progress: "已核验",
+      }).then((res) => {
+        this.$message({
+          type: "success",
+          message: "成功",
+        });
+        this.$router.push({ name: "dismantlingOld" });
+      });
+    },
+    handleConfirm() {
+      this.$router.push({ name: "dismantlingOld" });
+    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.layer-title,
-.form-title {
-  font-weight: normal;
-}
-.form-title {
-  font-size: 16px;
-  color: #333333;
-  margin-bottom: 26px;
+.grid {
+  width: 70%;
+  display: grid;
+  grid-template-columns: 150px 1fr 150px 1fr;
+  margin-bottom: 50px;
+  row-gap: 20px; /* 行间隙为10px */
+  column-gap: 20px; /* 列间隙为20px */
+  font-size: 14px;
 }
 
-.layer-title {
-  font-size: 14px;
-  color: #3757e2;
-  margin-bottom: 12px;
-  cursor: pointer;
-}
 .form .form {
   padding: 36px 0px;
 }

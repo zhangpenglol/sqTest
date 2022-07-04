@@ -13,7 +13,7 @@
           placeholder="请填写"
           v-model="userForm.userName"
         >
-        </el-input>
+        </el-input> 
       </el-form-item>
       <el-form-item label="登录账号" prop="loginId">
         <el-input
@@ -153,8 +153,7 @@ export default {
     margin-bottom: 32px;
   }
   .btn_box {
-    position: fixed;
-    bottom: 94px;
+    margin-top: 94px;
     .btn_bgc1 {
       background: #3757e2;
       color: #ffffff;

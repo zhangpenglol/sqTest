@@ -7,23 +7,23 @@
       :model="areaForm"
       :rules="rules"
     >
-      <el-form-item label="区域名称" prop="areaName">
+      <el-form-item label="区域名称" prop="regionName">
         <el-input
           class="input_width"
           placeholder="请填写"
-          v-model="areaForm.areaName"
+          v-model="areaForm.regionName"
         >
         </el-input>
       </el-form-item>
-      <el-form-item label="区域拼音" prop="areaSpell">
+      <el-form-item label="区域拼音" prop="regionNameEs">
         <el-input
           class="input_width"
           placeholder="请填写"
-          v-model="areaForm.areaSpell"
+          v-model="areaForm.regionNameEs"
         >
         </el-input>
       </el-form-item>
-      <el-form-item label="区域编码" prop="areaCode">
+      <el-form-item label="区域编码" prop="regionCode">
         <el-input
           class="input_width"
           placeholder="请填写"
@@ -32,30 +32,30 @@
         </el-input>
       </el-form-item>
 
-      <el-form-item label="上级区域" prop="areaParent">
+      <el-form-item label="上级区域" prop="parentRegionCode">
         <el-select
           class="input_width"
-          v-model="areaForm.areaParent"
+          v-model="areaForm.parentRegionCode"
           placeholder="请选择"
         >
           <el-option
             v-for="item in areaOptions"
             :key="item.value"
-            :label="item.label"
-            :value="item.value"
+            :label="item.regionName"
+            :value="item.regionNameEs"
           >
           </el-option>
         </el-select>
       </el-form-item>
 
-      <el-form-item label="区域类型" prop="areaType">
+      <el-form-item label="区域类型" prop="regionType">
         <el-select
           class="input_width"
-          v-model="areaForm.areaType"
+          v-model="areaForm.regionType"
           placeholder="请选择"
         >
           <el-option
-            v-for="item in areaTypeOptions"
+            v-for="item in regionTypeOptions"
             :key="item.value"
             :label="item.label"
             :value="item.value"
@@ -74,7 +74,7 @@
       </el-form-item>
 
       <div class="btn_box">
-        <el-button class="btn_width btn_bgc1">提交</el-button>
+        <el-button class="btn_width btn_bgc1" @click="submitForm">提交</el-button>
         <el-button class="btn_width btn_bgc2" @click="submitForm"
           >取消</el-button
         >
@@ -84,36 +84,77 @@
 </template>
 
 <script>
+import {findArcSysArea,findregionCode,addAndUpdateAreaList,deleteAllAreaList} from "@/api/area.js";
 export default {
+  name:'addarea',
   data() {
     return {
       areaForm: {
-        areaName: null, //区域名称
-        areaSpell: null,
-        areaCode: null,
-        areaType: null,
+        regionName: null, //区域名称
+        regionNameEs: null,
+        regionCode: null,
+        regionType: null,
       },
       areaOptions: [], //区域
-      areaTypeOptions: [],
+      regionTypeOptions: [
+        {
+          label:'市',
+          value:'市'
+        },
+        {
+          label:'县/区',
+          value:'县/区'
+        },
+        {
+          label:'乡/镇',
+          value:'乡/镇'
+        },
+        {
+          label:'村/居委会',
+          value:'村/居委会'
+        }
+      ],
       rules: {
-        areaName: [
+        regionName: [
           { required: true, message: "请填写区域名称", trigger: "blur" },
         ],
-        areaSpell: [
+        regionNameEs: [
           { required: true, message: "请填写区域拼音", trigger: "blur" },
         ],
-        areaCode: [
+        regionCode: [
           { required: true, message: "请填写区域编码", trigger: "blur" },
         ],
-        areaParent: [
+        parentRegionCode: [
           { required: true, message: "请填写上级区域", trigger: "blur" },
         ],
-        areaType: [
+        regionType: [
           { required: true, message: "请填写区域类型", trigger: "blur" },
         ],
       },
     };
   },
+  created(){
+    this.getAreaList();
+  },
+  methods:{
+    getAreaList() {
+      findArcSysArea().then((res) => {
+        if (res.status !== 200) return this.$message.error("查询信息失败!");
+        this.areaOptions = res.data;
+      });
+    },
+    submitForm(){
+      let params = {
+        regionName:this.regionName,
+        regionNameEs:this.regionNameEs,
+        regionCode:this.regionCode,
+        regionType:this.regionType,
+      }
+      addAndUpdateAreaList(params).then(res=>{
+        console.log(res)
+      })
+    }
+  }
 };
 </script>
 
@@ -127,8 +168,7 @@ export default {
     margin-bottom: 32px;
   }
   .btn_box {
-    position: fixed;
-    bottom: 94px;
+    margin-top: 94px;
     .btn_bgc1 {
       background: #3757e2;
       color: #ffffff;

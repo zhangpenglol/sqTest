@@ -1,52 +1,63 @@
-<!--
- * @Descripttion: 
- * @Author: 李增辉
- * @Date: 2022-04-14 09:47:47
- * @LastEditors: 李增辉
- * @LastEditTime: 2022-04-14 14:27:33
--->
+
 <template>
-  <div class="container-main">
-    <h2 class="form-title">新增/修改专项规划</h2>
+  <div class="container-main" v-loading="loading">
+    <h2 class="form-title">
+      {{ !$route.params.type ? "新增专项规划" : "修改专项规划" }}
+    </h2>
     <div class="form">
-      <el-form ref="form" :model="form" label-width="113px">
-        <el-form-item label="规划名称">
-          <el-input v-model="form.name"></el-input>
+      <el-form ref="form" :rules="rules" :model="form" label-width="113px">
+        <el-form-item label="规划名称" prop="planName">
+          <el-input v-model="form.planName"></el-input>
         </el-form-item>
         <el-form-item label="建新面积（公顷）">
-          <el-input v-model="form.name"></el-input>
+          <el-input v-model="form.balanceArea"></el-input>
         </el-form-item>
-        <el-form-item label="所属区域">
+        <el-form-item label="所属区域" prop="regionCode">
           <el-select
-            v-model="form.region"
+            v-model="form.regionCode"
             placeholder="请选择活动区域"
             class="is-sesect-icon"
           >
-            <el-option label="区域一" value="shanghai"></el-option>
-            <el-option label="区域二" value="beijing"></el-option>
+            <el-option
+              v-for="item in regionOptions"
+              :key="item.regionCode"
+              :label="item.regionName"
+              :value="item.regionCode"
+            >
+            </el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="结余面积（公顷）">
-          <el-input v-model="form.name"></el-input>
+          <el-input v-model="form.surplusArea"></el-input>
         </el-form-item>
-        <el-form-item label="规划期（年）">
+        <el-form-item label="规划期（年）" prop="guihuaqi">
           <el-select
-            v-model="form.region"
+            v-model="form.guihuaqi"
             placeholder="请选择活动区域"
             class="is-sesect-icon"
           >
-            <el-option label="区域一" value="shanghai"></el-option>
-            <el-option label="区域二" value="beijing"></el-option>
+            <el-option
+              v-for="item in planDateOptions"
+              :key="item.itemCode"
+              :label="item.itemCode"
+              :value="item.itemValue"
+            >
+            </el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="农村建设用地拆旧区总面积（公顷）">
-          <el-input v-model="form.name"></el-input>
+          <el-input v-model="form.demolishedArea"></el-input>
         </el-form-item>
         <el-form-item label="复垦面积（公顷）">
-          <el-input v-model="form.name"></el-input>
+          <el-input v-model="form.reclamationArea"></el-input>
         </el-form-item>
         <el-form-item class="upload-list" label="上传附件">
-          <xx-upload-list></xx-upload-list>
+          <XxUploadList
+              @getfileInfo="getfileInfo"
+              :id="$route.params.id"
+              :moduleName="moduleName"
+              :fileInfoListShow="form.fileInfoList">
+          </XxUploadList>
         </el-form-item>
       </el-form>
     </div>
@@ -69,16 +80,29 @@
         </el-table-column>
       </el-table>
     </div>
-    <div class="handles">
-      <el-button type="primary">确定</el-button>
+    <div class="handles" v-if="this.$route.params.type !== 'see'">
+      <el-button type="primary" @click="handleConfirm">确定</el-button>
       <el-button>取消</el-button>
     </div>
   </div>
 </template>
 <script>
+import {
+  saveLandSpecialPlan,
+  updateLandSpecialPlan,
+  findLandSpecialPlanById,
+} from "@/api/subjectPlan";
+import { findArcSysArea, findDictDetail } from "@/api/common";
+import XxUploadList from "@/components/commonComponents/XxUploadList"
 export default {
+  components:{
+    XxUploadList
+  },
   data() {
     return {
+      loading: false,
+      regionOptions: [],
+      planDateOptions: [],
       tableData: [
         {
           date: "2016-05-02",
@@ -102,37 +126,116 @@ export default {
         },
       ],
       form: {
-        name: "",
-        region: "",
-        date1: "",
-        date2: "",
-        delivery: false,
-        type: [],
-        resource: "",
-        desc: "",
+        id: undefined,
+        planName: "",
+        balanceArea: "",
+        regionCode: "",
+        surplusArea: "",
+        demolishedArea: "",
+        reclamationArea: "",
+        guihuaqi: "",
+        startYear: "",
+        endYear: "",
+        fileInfoList:[]
       },
+      rules: {
+        planName: [
+          { required: true, message: "请输入规划名称", trigger: "blur" },
+        ],
+        regionCode: [
+          { required: true, message: "请选择所属区域", trigger: "change" },
+        ],
+        guihuaqi: [
+          { required: true, message: "请选择规划期", trigger: "change" },
+        ],
+      },
+      moduleName:"专项规划管理"
     };
+  },
+
+  watch: {
+    "form.guihuaqi": function (newValue, oldV) {
+      if (!newValue) return;
+      const dataArr = newValue.split("-");
+      this.form.startYear = dataArr[0];
+      this.form.endYear = dataArr[1];
+    },
+    "form.startYear": function (newValue, oldV) {
+      this.form.guihuaqi = this.form.startYear + "-" + this.form.endYear;
+    },
+  },
+
+  created() {
+    this.handleUpdate();
+    this.init();
+  },
+  methods: {
+    init() {
+      this.getRegion();
+      this.getDict();
+    },
+    getDict() { //查询规划期
+      findDictDetail("ghq").then((res) => {
+        this.planDateOptions = res.data;
+      });
+    },
+    getRegion() { //查询所属区域
+      findArcSysArea().then((res) => {
+        this.regionOptions = res.data;
+      });
+    },
+    getfileInfo(data){
+      this.form.fileInfoList = data;
+    },
+    handleConfirm() { //确定
+      this.$refs["form"].validate((valid) => {
+        if (valid) {
+          if (this.$route.params.type == "isAdd") {
+            //新增
+            saveLandSpecialPlan(this.form).then((res) => {
+              this.$message({
+                message: "新增成功",
+                type: "success",
+              });
+              this.$router.push({
+                name: "subjectPlan",
+              });
+            });
+          } else if (this.$route.params.type == "isUpdate") {
+            //修改
+            updateLandSpecialPlan(this.form).then((res) => {
+              this.$message({
+                message: "修改成功",
+                type: "success",
+              });
+              this.$router.push({
+                name: "subjectPlan",
+              });
+            });
+          }
+        } else {
+          return false;
+        }
+      });
+    },
+    async handleUpdate() {
+      /**
+       * 判断是不是修改：是修改就回显。
+       */
+      if (!this.$route.params.type) return;
+      this.loading = true;
+      let res = await findLandSpecialPlanById(this.$route.params.id);
+      for (let key in this.form) {
+        this.form[key] = res.data[key];
+      }
+      this.loading = false;
+    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.layer-title,
-.form-title {
-  font-weight: normal;
-}
-.form-title {
-  font-size: 16px;
-  color: #333333;
-  margin-bottom: 26px;
-}
 
-.layer-title {
-  font-size: 14px;
-  color: #3757e2;
-  margin-bottom: 12px;
-  cursor: pointer;
-}
 .form .form {
   padding: 36px 0px;
 }

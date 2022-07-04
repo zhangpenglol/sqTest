@@ -196,8 +196,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.log_container {
-}
 .filter_box {
   display: flex;
   justify-content: space-between;
